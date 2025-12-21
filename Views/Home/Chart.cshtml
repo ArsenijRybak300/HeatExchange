@@ -1,0 +1,390 @@
+@model HeatExchangeCalculator.Models.CalculationResult
+@{
+    Layout = null;
+    var calculation = Model.OriginalCalculation;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Графики: @calculation?.Name</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #f8f9fa;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        h2 { 
+            color: #2c3e50; 
+            margin-bottom: 20px; 
+            font-weight: 600;
+            text-align: center;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 15px;
+        }
+        .chart-container { 
+            height: 400px; 
+            margin: 30px 0;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .btn { 
+            padding: 10px 20px; 
+            background: #6c757d; 
+            border: none; 
+            border-radius: 5px; 
+            text-decoration: none; 
+            color: white; 
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover { 
+            background: #5a6268;
+        }
+        .btn-close {
+            background: #750a0a81;
+        }
+        .btn-close:hover {
+            background: #c82333;
+        }
+        .btn-print {
+            background: #026d1979;
+        }
+        .btn-print:hover {
+            background: #218838;
+        }
+        .parameter-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .parameter-name {
+            font-weight: 500;
+        }
+        .parameter-value {
+            font-weight: 600;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: center;
+        }
+        .data-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Графики расчета: @calculation?.Name</h2>
+        
+        <!-- Информация о расчете -->
+        <div class="info-box">
+            <div class="row" style="display: flex; flex-wrap: wrap;">
+                <div class="col-6" style="flex: 1; min-width: 300px;">
+                    <div class="parameter-row">
+                        <span class="parameter-name">Высота слоя H₀:</span>
+                        <span class="parameter-value">@calculation?.LayerHeight м</span>
+                    </div>
+                    <div class="parameter-row">
+                        <span class="parameter-name">Темп. материала t′:</span>
+                        <span class="parameter-value">@calculation?.MaterialInitialTemp °C</span>
+                    </div>
+                    <div class="parameter-row">
+                        <span class="parameter-name">Темп. газа T′:</span>
+                        <span class="parameter-value">@calculation?.GasInitialTemp °C</span>
+                    </div>
+                    <div class="parameter-row">
+                        <span class="parameter-name">Скорость газа wг:</span>
+                        <span class="parameter-value">@calculation?.GasVelocity м/с</span>
+                    </div>
+                </div>
+                <div class="col-6" style="flex: 1; min-width: 300px;">
+                    <div class="parameter-row">
+                        <span class="parameter-name">Параметр m:</span>
+                        <span class="parameter-value">@Model.ParameterM.ToString("F3")</span>
+                    </div>
+                    <div class="parameter-row">
+                        <span class="parameter-name">Y₀:</span>
+                        <span class="parameter-value">@Model.Y0.ToString("F2")</span>
+                    </div>
+                    <div class="parameter-row">
+                        <span class="parameter-name">Знаменатель:</span>
+                        <span class="parameter-value">@Model.Denominator.ToString("F3")</span>
+                    </div>
+                    <div class="parameter-row">
+                        <span class="parameter-name">Дата расчета:</span>
+                        <span class="parameter-value">@calculation?.CreatedDate.ToString("dd.MM.yyyy HH:mm")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Таблица данных -->
+        <div class="chart-title">Температурное поле</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Высота, м</th>
+                    <th>Отн. высота Y</th>
+                    <th>Материал, °C</th>
+                    <th>Газ, °C</th>
+                    <th>Разность, °C</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var point in Model.Points)
+                {
+                    <tr>
+                        <td>@point.Height.ToString("F1")</td>
+                        <td>@point.RelativeHeight.ToString("F2")</td>
+                        <td>@point.MaterialTemperature.ToString("F1")</td>
+                        <td>@point.GasTemperature.ToString("F1")</td>
+                        <td>@point.TemperatureDifference.ToString("F1")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- График 1: Температуры -->
+        <div class="chart-title">Температуры материала и газа по высоте слоя</div>
+        <div class="chart-container">
+            <canvas id="temperatureChart"></canvas>
+        </div>
+        
+        <!-- График 2: Разность температур -->
+        <div class="chart-title">Разность температур по высоте слоя</div>
+        <div class="chart-container">
+            <canvas id="differenceChart"></canvas>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="window.print()" class="btn btn-print">Печать</button>
+            <button onclick="window.close()" class="btn btn-close">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        // Данные для графиков
+        const points = @Html.Raw(Json.Serialize(Model.Points));
+        
+        // Проверяем, что данные получены
+        if (!points || points.length === 0) {
+            console.error('Нет данных для графиков');
+            document.body.innerHTML = '<h2 style="color: red; text-align: center;">Ошибка: нет данных для отображения графиков</h2>';
+        } else {
+            console.log('Данные получены:', points.length, 'точек');
+        }
+        
+        // Создаем массивы
+        const labels = [];
+        const materialTemps = [];
+        const gasTemps = [];
+        const diffs = [];
+        
+        for (let i = 0; i < points.length; i++) {
+            labels.push(points[i].height.toFixed(1));
+            materialTemps.push(points[i].materialTemperature);
+            gasTemps.push(points[i].gasTemperature);
+            diffs.push(points[i].temperatureDifference);
+        }
+        
+        // Ждем загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            const tempCanvas = document.getElementById('temperatureChart');
+            const diffCanvas = document.getElementById('differenceChart');
+            
+            if (!tempCanvas || !diffCanvas) {
+                console.error('Canvas элементы не найдены');
+                return;
+            }
+            
+            // ГРАФИК 1: Температуры материала и газа
+            const tempCtx = tempCanvas.getContext('2d');
+            if (tempCtx) {
+                new Chart(tempCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Температура материала',
+                                data: materialTemps,
+                                borderColor: '#dc3545',
+                                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.1,
+                                pointRadius: 5,
+                                pointBackgroundColor: '#dc3545',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2
+                            },
+                            {
+                                label: 'Температура газа',
+                                data: gasTemps,
+                                borderColor: '#0d6efd',
+                                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.1,
+                                pointRadius: 5,
+                                pointBackgroundColor: '#0d6efd',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Изменение температур по высоте слоя',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                }
+                            },
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: { size: 14 },
+                                    padding: 15,
+                                    usePointStyle: true
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Высота слоя, м',
+                                    font: { size: 14, weight: 'bold' }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Температура, °C',
+                                    font: { size: 14, weight: 'bold' }
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('График температур создан');
+            }
+            
+            // ГРАФИК 2: Разность температур
+            const diffCtx = diffCanvas.getContext('2d');
+            if (diffCtx) {
+                new Chart(diffCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Разность температур',
+                                data: diffs,
+                                borderColor: '#198754',
+                                backgroundColor: 'rgba(25, 135, 84, 0.2)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.1,
+                                pointRadius: 5,
+                                pointBackgroundColor: '#198754',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Изменение разности температур по высоте слоя',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                }
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Высота слоя, м',
+                                    font: { size: 14, weight: 'bold' }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Разность температур, °C',
+                                    font: { size: 14, weight: 'bold' }
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('График разностей создан');
+            }
+        });
+        
+        setTimeout(function() {
+            if (typeof Chart === 'undefined') {
+                document.body.innerHTML += '<div style="color: red; text-align: center; margin-top: 20px;">Ошибка: Chart.js не загружен</div>';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

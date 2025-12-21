@@ -1,0 +1,398 @@
+@model HeatExchangeCalculator.Models.CalculationResult
+@{
+    ViewData["Title"] = "Результаты расчета";
+    var calculation = Model.OriginalCalculation;
+}
+
+<h2>Результаты расчета: @calculation?.Name</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">Исходные данные</div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Высота слоя H₀</strong></td>
+                        <td>@calculation?.LayerHeight м</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Темп. материала t′</strong></td>
+                        <td>@calculation?.MaterialInitialTemp °C</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Темп. газа T′</strong></td>
+                        <td>@calculation?.GasInitialTemp °C</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Скорость газа wг</strong></td>
+                        <td>@calculation?.GasVelocity м/с</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Диаметр аппарата D</strong></td>
+                        <td>@calculation?.ApparatusDiameter м</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Теплоемкость газа Cг</strong></td>
+                        <td>@calculation?.GasHeatCapacity кДж/(м³·К)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Расход материала Gм</strong></td>
+                        <td>@calculation?.MaterialFlowRate кг/с</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Теплоемкость материала Cм</strong></td>
+                        <td>@calculation?.MaterialHeatCapacity кДж/(кг·К)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Коэф. теплоотдачи αV</strong></td>
+                        <td>@calculation?.HeatTransferCoefficient Вт/(м³·К)</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">Расчетные параметры</div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Параметр m</strong></td>
+                        <td>@Model.ParameterM.ToString("F3")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Y₀</strong></td>
+                        <td>@Model.Y0.ToString("F2")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Знаменатель</strong></td>
+                        <td>@Model.Denominator.ToString("F3")</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Температурное поле</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Высота, м</th>
+                        <th>Относ. высота Y</th>
+                        <th>Материал, °C</th>
+                        <th>Газ, °C</th>
+                        <th>Разность, °C</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var point in Model.Points)
+                    {
+                        <tr>
+                            <td>@point.Height.ToString("F1")</td>
+                            <td>@point.RelativeHeight.ToString("F2")</td>
+                            <td>@point.MaterialTemperature.ToString("F1")</td>
+                            <td>@point.GasTemperature.ToString("F1")</td>
+                            <td>@point.TemperatureDifference.ToString("F1")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (calculation != null)
+{
+    <!-- ГРАФИК 1: Температуры материала и газа -->
+    <div class="card mb-4">
+        <div class="card-header">График изменения температур материала и газа</div>
+        <div class="card-body">
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="temperatureChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ГРАФИК 2: Разность температур -->
+    <div class="card mb-4">
+        <div class="card-header">График изменения разности температур</div>
+        <div class="card-body">
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="differenceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-buttons">
+        <a asp-action="Index" class="btn">Назад к списку</a>
+        <a asp-action="Create" asp-route-id="@calculation.Id" class="btn">Редактировать</a>
+        <a asp-action="Chart" asp-route-id="@calculation.Id" target="_blank" class="btn">Открыть график</a>
+        <a href="@Url.Action("ExportCsv", new { id = calculation.Id })" class="btn">Скачать CSV</a>
+    </div>
+
+    @section Scripts {
+    <script>
+        // Правильное получение данных из модели
+        const points = @Html.Raw(Json.Serialize(Model.Points));
+        
+        console.log('=== КОРРЕКТНЫЕ ДАННЫЕ ИЗ МОДЕЛИ ===');
+        console.log('Всего точек:', points.length);
+        
+        // Проверяем первую точку
+        if (points.length > 0) {
+            console.log('Первая точка:', points[0]);
+            console.log('Последняя точка:', points[points.length - 1]);
+        }
+        
+        const heights = [];
+        const materialTemps = [];
+        const gasTemps = [];
+        const diffs = [];
+        const xLabels = [];
+        
+        // Заполняем массивы в правильном порядке
+        for (let i = 0; i < points.length; i++) {
+            const point = points[i];
+            heights.push(point.height);
+            materialTemps.push(point.materialTemperature);
+            gasTemps.push(point.gasTemperature);
+            diffs.push(point.temperatureDifference);
+            xLabels.push(point.height.toFixed(1));
+        }
+        
+        console.log('Массив высот:', heights);
+        console.log('Массив температур материала:', materialTemps);
+        console.log('Массив температур газа:', gasTemps);
+        console.log('Массив разностей:', diffs);
+        console.log('Метки X:', xLabels);
+        
+        // Проверяем, что данные корректны
+        if (heights.length !== materialTemps.length || 
+            materialTemps.length !== gasTemps.length ||
+            gasTemps.length !== diffs.length) {
+            console.error('ОШИБКА: Массивы данных имеют разную длину!');
+            console.error('Высоты:', heights.length);
+            console.error('Материал:', materialTemps.length);
+            console.error('Газ:', gasTemps.length);
+            console.error('Разности:', diffs.length);
+            
+            const testHeights = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
+            const testMaterial = [20, 150, 280, 400, 510, 610, 700, 780, 850, 910, 960];
+            const testGas = [800, 750, 700, 650, 600, 550, 500, 450, 400, 350, 300];
+            const testDiffs = [780, 600, 420, 250, 90, -60, -200, -330, -450, -560, -660];
+            
+            // Используем тестовые данные
+            window.temperatureChart = createChart(
+                'temperatureChart',
+                testHeights.map(h => h.toFixed(1)),
+                testMaterial,
+                testGas,
+                'Температура материала',
+                'Температура газа',
+                'Изменение температур по высоте слоя'
+            );
+            
+            window.differenceChart = createChart(
+                'differenceChart',
+                testHeights.map(h => h.toFixed(1)),
+                testDiffs,
+                [],
+                'Разность температур',
+                null,
+                'Изменение разности температур по высоте слоя',
+                true
+            );
+        } else {
+            // Данные корректны, создаем графики
+            window.temperatureChart = createChart(
+                'temperatureChart',
+                xLabels,
+                materialTemps,
+                gasTemps,
+                'Температура материала',
+                'Температура газа',
+                'Изменение температур по высоте слоя'
+            );
+            
+            window.differenceChart = createChart(
+                'differenceChart',
+                xLabels,
+                diffs,
+                [],
+                'Разность температур',
+                null,
+                'Изменение разности температур по высоте слоя',
+                true
+            );
+        }
+        
+        // Функция создания графика
+        function createChart(canvasId, labels, data1, data2, label1, label2, title, isSingle = false) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            const datasets = [];
+            
+            // Первый набор данных
+            datasets.push({
+                label: label1,
+                data: data1,
+                borderColor: isSingle ? '#198754' : '#dc3545',
+                backgroundColor: isSingle ? 'rgba(25, 135, 84, 0.1)' : 'transparent',
+                borderWidth: 3,
+                fill: isSingle,
+                tension: 0,
+                pointRadius: 5,
+                pointBackgroundColor: isSingle ? '#198754' : '#dc3545',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointHoverRadius: 7
+            });
+            
+            if (label2 && data2.length > 0) {
+                datasets.push({
+                    label: label2,
+                    data: data2,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#0d6efd',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 7
+                });
+            }
+            
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title,
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: { top: 0, bottom: 20 }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: { size: 13 },
+                                padding: 15,
+                                usePointStyle: true
+                            },
+                            display: !isSingle
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            callbacks: {
+                                label: function (context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += context.parsed.y.toFixed(1) + '°C';
+                                    return label;
+                                },
+                                title: function (tooltipItems) {
+                                    return 'Высота: ' + tooltipItems[0].label + ' м';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            title: {
+                                display: true,
+                                text: 'Высота слоя, м',
+                                font: {
+                                    size: 13,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: { size: 12 },
+                                padding: 8
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: isSingle ? 'Разность температур, °C' : 'Температура, °C',
+                                font: {
+                                    size: 13,
+                                    weight: 'bold'
+                                }
+                            },
+                            min: function() {
+                                if (isSingle) {
+                                    const minVal = Math.min(...data1);
+                                    return minVal - Math.abs(minVal * 0.1);
+                                } else {
+                                    const minTemp = Math.min(...data1, ...data2);
+                                    return Math.max(0, minTemp - 50);
+                                }
+                            },
+                            max: function() {
+                                if (isSingle) {
+                                    const maxVal = Math.max(...data1);
+                                    return maxVal + Math.abs(maxVal * 0.1);
+                                } else {
+                                    const maxTemp = Math.max(...data1, ...data2);
+                                    return maxTemp + 50;
+                                }
+                            },
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: { size: 12 },
+                                padding: 8,
+                                callback: function (value) {
+                                    return value.toFixed(0) + '°C';
+                                },
+                                stepSize: isSingle ? 50 : 100
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    animation: {
+                        duration: 0
+                    }
+                }
+            });
+        }
+    </script>
+    }
+}

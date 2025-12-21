@@ -1,0 +1,95 @@
+@model HeatExchangeCalculator.Models.Calculation
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Новый расчет" : "Редактирование расчета";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">Название расчета</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            
+            <h5 class="mt-4 mb-3">Основные параметры</h5>
+            <div class="mb-3">
+                <label asp-for="LayerHeight" class="form-label">Высота слоя H₀ (м)</label>
+                <input asp-for="LayerHeight" class="form-control" step="0.1" />
+                <span asp-validation-for="LayerHeight" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="ApparatusDiameter" class="form-label">Диаметр аппарата D (м)</label>
+                <input asp-for="ApparatusDiameter" class="form-control" step="0.1" />
+                <span asp-validation-for="ApparatusDiameter" class="text-danger"></span>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <h5 class="mb-3">Температуры</h5>
+            <div class="mb-3">
+                <label asp-for="MaterialInitialTemp" class="form-label">Начальная температура материала t′ (°C)</label>
+                <input asp-for="MaterialInitialTemp" class="form-control" step="1" />
+                <span asp-validation-for="MaterialInitialTemp" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="GasInitialTemp" class="form-label">Начальная температура газа T′ (°C)</label>
+                <input asp-for="GasInitialTemp" class="form-control" step="1" />
+                <span asp-validation-for="GasInitialTemp" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <h5 class="mb-3">Параметры газа</h5>
+            <div class="mb-3">
+                <label asp-for="GasVelocity" class="form-label">Скорость газа wг (м/с)</label>
+                <input asp-for="GasVelocity" class="form-control" step="0.01" />
+                <span asp-validation-for="GasVelocity" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="GasHeatCapacity" class="form-label">Теплоемкость газа Cг (кДж/(м³·К))</label>
+                <input asp-for="GasHeatCapacity" class="form-control" step="0.01" />
+                <span asp-validation-for="GasHeatCapacity" class="text-danger"></span>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <h5 class="mb-3">Параметры материала</h5>
+            <div class="mb-3">
+                <label asp-for="MaterialFlowRate" class="form-label">Расход материала Gм (кг/с)</label>
+                <input asp-for="MaterialFlowRate" class="form-control" step="0.01" />
+                <span asp-validation-for="MaterialFlowRate" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="MaterialHeatCapacity" class="form-label">Теплоемкость материала Cм (кДж/(кг·К))</label>
+                <input asp-for="MaterialHeatCapacity" class="form-control" step="0.01" />
+                <span asp-validation-for="MaterialHeatCapacity" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="HeatTransferCoefficient" class="form-label">Объемный коэффициент теплоотдачи αV (Вт/(м³·К))</label>
+                <input asp-for="HeatTransferCoefficient" class="form-control" step="10" />
+                <span asp-validation-for="HeatTransferCoefficient" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="navigation-buttons">
+        <button type="submit" class="btn">Сохранить и рассчитать</button>
+        <a asp-action="Index" class="btn">Отмена</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
