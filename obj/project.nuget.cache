@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "sRT50xptBXE=",
+  "dgSpecHash": "bry598cGjZk=",
   "success": true,
-  "projectFilePath": "C:\\Users\\rsnrbk\\HeatExchangeCalculator\\HeatExchangeCalculator.csproj",
+  "projectFilePath": "C:\\Users\\rsnrbk\\Documents\\GitHub\\HeatExchange\\HeatExchangeCalculator.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\rsnrbk\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\rsnrbk\\.nuget\\packages\\microsoft.aspnetcore.mvc.razor.extensions\\6.0.0\\microsoft.aspnetcore.mvc.razor.extensions.6.0.0.nupkg.sha512",

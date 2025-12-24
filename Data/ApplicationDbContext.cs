@@ -5,19 +5,23 @@ namespace HeatExchangeCalculator.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        public DbSet<Calculation> Calculations { get; set; }
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) 
             : base(options)
         {
         }
 
-        public DbSet<Calculation> Calculations { get; set; } = null!;
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseSqlite("Data Source=HeatExchangeCalculator.db");
-            }
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Calculation>()
+                .HasIndex(c => c.CreatedDate);
+            
+            // Настройка значений по умолчанию
+            modelBuilder.Entity<Calculation>()
+                .Property(c => c.CreatedDate)
+                .HasDefaultValueSql("datetime('now')");
         }
     }
 }

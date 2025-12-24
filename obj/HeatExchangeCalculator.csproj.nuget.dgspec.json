@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\rsnrbk\\HeatExchangeCalculator\\HeatExchangeCalculator.csproj": {}
+    "C:\\Users\\rsnrbk\\Documents\\GitHub\\HeatExchange\\HeatExchangeCalculator.csproj": {}
   },
   "projects": {
-    "C:\\Users\\rsnrbk\\HeatExchangeCalculator\\HeatExchangeCalculator.csproj": {
+    "C:\\Users\\rsnrbk\\Documents\\GitHub\\HeatExchange\\HeatExchangeCalculator.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\rsnrbk\\HeatExchangeCalculator\\HeatExchangeCalculator.csproj",
+        "projectUniqueName": "C:\\Users\\rsnrbk\\Documents\\GitHub\\HeatExchange\\HeatExchangeCalculator.csproj",
         "projectName": "HeatExchangeCalculator",
-        "projectPath": "C:\\Users\\rsnrbk\\HeatExchangeCalculator\\HeatExchangeCalculator.csproj",
+        "projectPath": "C:\\Users\\rsnrbk\\Documents\\GitHub\\HeatExchange\\HeatExchangeCalculator.csproj",
         "packagesPath": "C:\\Users\\rsnrbk\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\rsnrbk\\HeatExchangeCalculator\\obj\\",
+        "outputPath": "C:\\Users\\rsnrbk\\Documents\\GitHub\\HeatExchange\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

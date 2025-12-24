@@ -4,30 +4,32 @@ using HeatExchangeCalculator.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Конфигурация базы данных SQLite
+// === БАЗА ДАННЫХ ТОЛЬКО В bin\Debug\net8.0\ ===
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    // Путь к папке где запущено приложение (bin\Debug\net8.0\)
+    string appBaseDir = AppContext.BaseDirectory;
+    string dbPath = Path.Combine(appBaseDir, "HeatExchangeCalculator.db");
+    
+    Console.WriteLine($"=== БАЗА ДАННЫХ ===");
+    Console.WriteLine($"Запуск из: {appBaseDir}");
+    Console.WriteLine($"Файл БД: {dbPath}");
+    Console.WriteLine($"===================\n");
+    
+    options.UseSqlite($"Data Source={dbPath}");
+});
 
-// Регистрация сервисов
 builder.Services.AddScoped<HeatExchangeService>();
-
-// Добавление контроллеров и представлений
-builder.Services.AddControllersWithViews()
-    .AddRazorRuntimeCompilation();
-
-// Добавление поддержки Razor Pages для валидации
-builder.Services.AddRazorPages();
+builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
 var app = builder.Build();
 
-// Миграция базы данных при запуске
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.EnsureCreated();
 }
 
-// Конфигурация пайплайна
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
