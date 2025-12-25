@@ -3,7 +3,7 @@ namespace HeatExchangeCalculator.Models
     public class CalculationResult
     {
         public Calculation? OriginalCalculation { get; set; } 
-        public List<PointResult> Points { get; set; } = new()
+        public List<PointResult> Points { get; set; } = new();
         public double ParameterM { get; set; }
         public double Y0 { get; set; }
         public double Denominator { get; set; }

@@ -18,7 +18,6 @@ namespace HeatExchangeCalculator.Data
             modelBuilder.Entity<Calculation>()
                 .HasIndex(c => c.CreatedDate);
             
-            // Настройка значений по умолчанию
             modelBuilder.Entity<Calculation>()
                 .Property(c => c.CreatedDate)
                 .HasDefaultValueSql("datetime('now')");
