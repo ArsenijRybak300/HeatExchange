@@ -4,10 +4,8 @@ using HeatExchangeCalculator.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// === БАЗА ДАННЫХ ТОЛЬКО В bin\Debug\net8.0\ ===
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    // Путь к папке где запущено приложение (bin\Debug\net8.0\)
     string appBaseDir = AppContext.BaseDirectory;
     string dbPath = Path.Combine(appBaseDir, "HeatExchangeCalculator.db");
     
